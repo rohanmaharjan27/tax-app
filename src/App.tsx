@@ -1,25 +1,25 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { useState } from 'react';
+import { ThemeProvider } from 'styled-components';
+import { Row, Switch } from 'antd';
+import { MoneyCalculator } from './features/MoneyCalculator/MoneyCalculator';
+import { darkTheme, GlobalStyles, lightTheme } from './themes';
 import './App.css';
 
 function App() {
+  const [theme, setTheme] = useState(false);
+
+  const handleThemeToggle = (checked: boolean) => {
+    setTheme(checked);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={theme ? lightTheme : darkTheme}>
+      <GlobalStyles />
+      <Row style={{ padding: 16 }} justify='end'>
+        <Switch checked={theme} onChange={handleThemeToggle} />
+      </Row>
+      <MoneyCalculator />
+    </ThemeProvider>
   );
 }
 
