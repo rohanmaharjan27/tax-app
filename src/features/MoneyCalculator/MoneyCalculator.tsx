@@ -12,7 +12,7 @@ interface Props {}
 interface Data {
   marriage_status: string;
   basic_salary: number;
-  no_of_months:number;
+  no_of_months: number;
   cit: number;
 }
 
@@ -24,14 +24,14 @@ const MoneyCalculator: FC<Props> = (props) => {
   const [data, setData] = useState<Data>({
     marriage_status: 'Unmarried',
     basic_salary: 0,
-    no_of_months:12,
+    no_of_months: 12,
     cit: 0,
   });
 
-  const [tds, setTds] = useState<number>(0);
-  const [cashInHand, setCashInHand] = useState<number>(0);
-
   const { marriage_status, basic_salary, no_of_months, cit } = data;
+
+  const [tds, setTds] = useState<string | undefined>('');
+  const [cashInHand, setCashInHand] = useState<string | undefined>('');
 
   const handleSelectChange = (value: string) => {
     setData({ ...data, marriage_status: value });
@@ -40,7 +40,6 @@ const MoneyCalculator: FC<Props> = (props) => {
   const handleInputNumberChange = (value: number | string, name: string) => {
     setData({ ...data, [name]: value });
   };
-
 
   const calculateTax = () => {
     const oneLakhs = 100000;
@@ -61,7 +60,6 @@ const MoneyCalculator: FC<Props> = (props) => {
     const annualSalary = basic_salary * no_of_months;
 
     const netAssessable = annualSalary - cit;
-    
 
     const calculateTaxUptoFourLakhs = () => {
       if (netAssessable < fourLakhs) {
@@ -134,46 +132,45 @@ const MoneyCalculator: FC<Props> = (props) => {
 
     if (netAssessable <= fourLakhs) {
       const tax = calculateTaxUptoFourLakhs();
-      setTds(tax);
+      return tax;
     } else if (netAssessable > fourLakhs && netAssessable <= fiveLakhs) {
       const tax = calculateAdditionalOneLakh();
-      setTds(tax);
+      return tax;
     } else if (netAssessable > fiveLakhs && netAssessable <= sevenLakhs) {
       const tax = calculateAdditionalTwoLakh();
-      setTds(tax);
+      return tax;
     } else if (netAssessable > sevenLakhs && netAssessable <= twentyLakhs) {
       const tax = calculateAdditionalThirteenLakhs();
-      setTds(tax);
+      return tax;
     } else if (netAssessable > twentyLakhs) {
       const tax = calculateAdditionalAboveTwentyLakhs();
-      setTds(tax);
+      return tax;
     }
   };
 
-  const convertToFormat=(number:number)=>{
-    return number.toLocaleString('en-IN');
-  }
+  const convertToFormat = (number: number | undefined) => {
+    return number?.toLocaleString('en-IN');
+  };
 
   const handleCalculate = () => {
-    switch (marriage_status) {
-      case 'Married':
-        calculateTax();
-        break;
+    if (marriage_status === 'Unmarried') {
+      const tds = calculateTax();
+      const annualSalary = basic_salary * no_of_months;
 
-      case 'Unmarried':
-        calculateTax();
-        break;
+      const cash = annualSalary - Number(tds) - cit;
+
+      setTds(convertToFormat(tds));
+      setCashInHand(convertToFormat(cash));
+    } else {
+      const tds = calculateTax();
+      const annualSalary = basic_salary * no_of_months;
+
+      const cash = annualSalary - Number(tds) - cit;
+
+      setTds(convertToFormat(tds));
+      setCashInHand(convertToFormat(cash));
     }
-
-    const annualSalary = basic_salary * no_of_months;
-
-    const cash = (annualSalary-tds)-cit;
-
-    setCashInHand(cash);
   };
-
-  console.log('data', data);
-  console.log('tds', tds);
 
   return (
     <Row align='middle'>
@@ -245,7 +242,7 @@ const MoneyCalculator: FC<Props> = (props) => {
                 <FormLabel>TDS</FormLabel>
               </AlignedCol>
               <AlignedCol>
-                <Text18>{tds ? `Rs. ${convertToFormat(tds)}` : '---'}</Text18>
+                <Text18>{tds ? `Rs. ${tds}` : '---'}</Text18>
               </AlignedCol>
             </Row>
           </Col>
@@ -255,7 +252,7 @@ const MoneyCalculator: FC<Props> = (props) => {
                 <FormLabel>Cash in hand</FormLabel>
               </AlignedCol>
               <AlignedCol>
-                <Text18>{cashInHand ? `Rs. ${convertToFormat(cashInHand)}` : '---'}</Text18>
+                <Text18>{cashInHand ? `Rs. ${cashInHand}` : '---'}</Text18>
               </AlignedCol>
             </Row>
           </Col>
