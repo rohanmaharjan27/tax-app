@@ -217,6 +217,7 @@ const MoneyCalculator: FC<Props> = (props) => {
               <StyledInputNumber
                 name='basic_salary'
                 value={basic_salary}
+                min={0}
                 onChange={(value) =>
                   handleInputNumberChange(value, 'basic_salary')
                 }
@@ -246,6 +247,7 @@ const MoneyCalculator: FC<Props> = (props) => {
                 name='cit'
                 value={cit}
                 onChange={(value) => handleInputNumberChange(value, 'cit')}
+                min={0}
               />
             </Form.Item>
             <Form.Item>
