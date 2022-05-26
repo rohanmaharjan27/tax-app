@@ -42,104 +42,130 @@ const MoneyCalculator: FC<Props> = (props) => {
   };
 
   const calculateTax = () => {
+    // constants for amounts
     const oneLakhs = 100000;
     const twoLakhs = 200000;
     const fourLakhs = 400000;
-    // const fourandAHalfLakhs = 450000;
+    const fourAndAHalfLakhs = 450000;
     const fiveLakhs = 500000;
+    const fiveAndAHalfLakhs = 550000;
     const sevenLakhs = 700000;
+    const sevenAndAHalfLakhs = 750000;
+    const twelveAndAHalfLakhs = 1250000;
     const thirteenLakhs = 1300000;
     const twentyLakhs = 2000000;
 
-    const taxRateUptoFourLakhs = 0.01;
-    const taxRateForAdditionalOneLakhs = 0.1;
-    const taxRateForAdditionalTwoLakhs = 0.2;
-    const taxRateForAdditionalThirteenLakhs = 0.3;
-    const taxRateForAdditionalTwentyLakhs = 0.36;
+    // tax rates for every step of annual income
+    const firstStepTaxRate = 0.01;
+    const secondStepTaxRate = 0.1;
+    const thirdStepTaxRate = 0.2;
+    const fourthStepTaxRate = 0.3;
+    const fifthStepTaxRate = 0.36;
 
+    // calculate annual salary
     const annualSalary = basic_salary * no_of_months;
 
+    // calculate net assessable amount
     const netAssessable = annualSalary - cit;
 
+    const fourOrFourAndAHalf =
+      marriage_status === 'Married' ? fourAndAHalfLakhs : fourLakhs;
+
+    const fiveOrFiveAndAHalf =
+      marriage_status === 'Married' ? fiveAndAHalfLakhs : fiveLakhs;
+    const sevenOrSevenAndAHalf =
+      marriage_status === 'Married' ? sevenAndAHalfLakhs : sevenLakhs;
+
+    const thirteenOrTwelveAndAHalf =
+      marriage_status === 'Married' ? twelveAndAHalfLakhs : thirteenLakhs;
+
+    // calculate tax up to four or four and a half lakhs
     const calculateTaxUptoFourLakhs = () => {
-      if (netAssessable < fourLakhs) {
-        const tax = taxRateUptoFourLakhs * netAssessable;
+      if (netAssessable < fourOrFourAndAHalf) {
+        const tax = firstStepTaxRate * netAssessable;
         return tax;
       } else {
-        const tax = taxRateUptoFourLakhs * fourLakhs;
+        const tax = firstStepTaxRate * fourOrFourAndAHalf;
         return tax;
       }
     };
 
+    // calculate tax for additional one lakh
     const calculateAdditionalOneLakh = () => {
-      const additionalIncome = netAssessable - fourLakhs;
+      const additionalIncome = netAssessable - fourOrFourAndAHalf;
 
-      if (netAssessable < fiveLakhs) {
+      if (netAssessable < fiveOrFiveAndAHalf) {
         const tax =
-          calculateTaxUptoFourLakhs() +
-          taxRateForAdditionalOneLakhs * additionalIncome;
+          calculateTaxUptoFourLakhs() + secondStepTaxRate * additionalIncome;
 
         return tax;
       } else {
-        const tax =
-          calculateTaxUptoFourLakhs() + taxRateForAdditionalOneLakhs * oneLakhs;
+        const tax = calculateTaxUptoFourLakhs() + secondStepTaxRate * oneLakhs;
 
         return tax;
       }
     };
 
+    // calculate tax for additional two lakhs
     const calculateAdditionalTwoLakh = () => {
-      const additionalIncome = netAssessable - fiveLakhs;
+      const additionalIncome = netAssessable - fiveOrFiveAndAHalf;
 
-      if (netAssessable < sevenLakhs) {
+      if (netAssessable < sevenOrSevenAndAHalf) {
         const tax =
-          calculateAdditionalOneLakh() +
-          taxRateForAdditionalTwoLakhs * additionalIncome;
+          calculateAdditionalOneLakh() + thirdStepTaxRate * additionalIncome;
         return tax;
       } else {
-        const tax =
-          calculateAdditionalOneLakh() +
-          taxRateForAdditionalTwoLakhs * twoLakhs;
+        const tax = calculateAdditionalOneLakh() + thirdStepTaxRate * twoLakhs;
         return tax;
       }
     };
 
+    // calculate tax for additional thirteen or twelve and a half lakhs
     const calculateAdditionalThirteenLakhs = () => {
-      const additionalIncome = netAssessable - sevenLakhs;
+      const additionalIncome = netAssessable - thirteenOrTwelveAndAHalf;
 
       if (netAssessable < twentyLakhs) {
         const tax =
-          calculateAdditionalTwoLakh() +
-          taxRateForAdditionalThirteenLakhs * additionalIncome;
+          calculateAdditionalTwoLakh() + fourthStepTaxRate * additionalIncome;
         return tax;
       } else {
         const tax =
           calculateAdditionalTwoLakh() +
-          taxRateForAdditionalThirteenLakhs * thirteenLakhs;
+          fourthStepTaxRate * thirteenOrTwelveAndAHalf;
         return tax;
       }
     };
 
+    // calculate tax for additional twenty lakhs
     const calculateAdditionalAboveTwentyLakhs = () => {
       const additionalIncome = netAssessable - twentyLakhs;
 
       const tax =
         calculateAdditionalThirteenLakhs() +
-        taxRateForAdditionalTwentyLakhs * additionalIncome;
+        fifthStepTaxRate * additionalIncome;
 
       return tax;
     };
 
-    if (netAssessable <= fourLakhs) {
+    if (netAssessable <= fourOrFourAndAHalf) {
       const tax = calculateTaxUptoFourLakhs();
       return tax;
-    } else if (netAssessable > fourLakhs && netAssessable <= fiveLakhs) {
+    } else if (
+      netAssessable > fourOrFourAndAHalf &&
+      netAssessable <= fiveOrFiveAndAHalf
+    ) {
       const tax = calculateAdditionalOneLakh();
       return tax;
-    } else if (netAssessable > fiveLakhs && netAssessable <= sevenLakhs) {
+    } else if (
+      netAssessable > fiveOrFiveAndAHalf &&
+      netAssessable <= sevenOrSevenAndAHalf
+    ) {
       const tax = calculateAdditionalTwoLakh();
       return tax;
-    } else if (netAssessable > sevenLakhs && netAssessable <= twentyLakhs) {
+    } else if (
+      netAssessable > sevenOrSevenAndAHalf &&
+      netAssessable <= twentyLakhs
+    ) {
       const tax = calculateAdditionalThirteenLakhs();
       return tax;
     } else if (netAssessable > twentyLakhs) {
@@ -148,28 +174,20 @@ const MoneyCalculator: FC<Props> = (props) => {
     }
   };
 
+  // function to convert to Indian rupee format
   const convertToFormat = (number: number | undefined) => {
     return number?.toLocaleString('en-IN');
   };
 
+  // calculate cash in hand
   const handleCalculate = () => {
-    if (marriage_status === 'Unmarried') {
-      const tds = calculateTax();
-      const annualSalary = basic_salary * no_of_months;
+    const tds = calculateTax();
+    const annualSalary = basic_salary * no_of_months;
 
-      const cash = annualSalary - Number(tds) - cit;
+    const cash = annualSalary - Number(tds) - cit;
 
-      setTds(convertToFormat(tds));
-      setCashInHand(convertToFormat(cash));
-    } else {
-      const tds = calculateTax();
-      const annualSalary = basic_salary * no_of_months;
-
-      const cash = annualSalary - Number(tds) - cit;
-
-      setTds(convertToFormat(tds));
-      setCashInHand(convertToFormat(cash));
-    }
+    setTds(convertToFormat(tds));
+    setCashInHand(convertToFormat(cash));
   };
 
   return (
@@ -187,8 +205,8 @@ const MoneyCalculator: FC<Props> = (props) => {
                 style={{ width: '100%' }}
                 onChange={handleSelectChange}
               >
-                <Option value='Married'>Married</Option>
                 <Option value='Unmarried'>Unmarried</Option>
+                <Option value='Married'>Married</Option>
               </Select>
             </Form.Item>
             <Form.Item
