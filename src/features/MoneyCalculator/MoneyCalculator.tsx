@@ -12,6 +12,7 @@ interface Props {}
 interface Data {
   marriage_status: string;
   basic_salary: number;
+  no_of_months:number;
   cit: number;
 }
 
@@ -23,13 +24,14 @@ const MoneyCalculator: FC<Props> = (props) => {
   const [data, setData] = useState<Data>({
     marriage_status: 'Unmarried',
     basic_salary: 0,
+    no_of_months:12,
     cit: 0,
   });
 
-  const [tds, setTds] = useState<number | null>(null);
-  const [cashInHand, setCashInHand] = useState<number | null>(null);
+  const [tds, setTds] = useState<number>(0);
+  const [cashInHand, setCashInHand] = useState<number>(0);
 
-  const { marriage_status, basic_salary, cit } = data;
+  const { marriage_status, basic_salary, no_of_months, cit } = data;
 
   const handleSelectChange = (value: string) => {
     setData({ ...data, marriage_status: value });
@@ -39,13 +41,12 @@ const MoneyCalculator: FC<Props> = (props) => {
     setData({ ...data, [name]: value });
   };
 
-  const calculateTax = () => {
-    // const months = 12;
 
+  const calculateTax = () => {
     const oneLakhs = 100000;
     const twoLakhs = 200000;
     const fourLakhs = 400000;
-    const fourandAHalfLakhs = 450000;
+    // const fourandAHalfLakhs = 450000;
     const fiveLakhs = 500000;
     const sevenLakhs = 700000;
     const thirteenLakhs = 1300000;
@@ -57,11 +58,14 @@ const MoneyCalculator: FC<Props> = (props) => {
     const taxRateForAdditionalThirteenLakhs = 0.3;
     const taxRateForAdditionalTwentyLakhs = 0.36;
 
-    const annualSalary = basic_salary;
+    const annualSalary = basic_salary * no_of_months;
+
+    const netAssessable = annualSalary - cit;
+    
 
     const calculateTaxUptoFourLakhs = () => {
-      if (annualSalary < fourLakhs) {
-        const tax = taxRateUptoFourLakhs * annualSalary;
+      if (netAssessable < fourLakhs) {
+        const tax = taxRateUptoFourLakhs * netAssessable;
         return tax;
       } else {
         const tax = taxRateUptoFourLakhs * fourLakhs;
@@ -70,9 +74,9 @@ const MoneyCalculator: FC<Props> = (props) => {
     };
 
     const calculateAdditionalOneLakh = () => {
-      const additionalIncome = annualSalary - fourLakhs;
+      const additionalIncome = netAssessable - fourLakhs;
 
-      if (annualSalary < fiveLakhs) {
+      if (netAssessable < fiveLakhs) {
         const tax =
           calculateTaxUptoFourLakhs() +
           taxRateForAdditionalOneLakhs * additionalIncome;
@@ -87,9 +91,9 @@ const MoneyCalculator: FC<Props> = (props) => {
     };
 
     const calculateAdditionalTwoLakh = () => {
-      const additionalIncome = annualSalary - fiveLakhs;
+      const additionalIncome = netAssessable - fiveLakhs;
 
-      if (annualSalary < sevenLakhs) {
+      if (netAssessable < sevenLakhs) {
         const tax =
           calculateAdditionalOneLakh() +
           taxRateForAdditionalTwoLakhs * additionalIncome;
@@ -103,9 +107,9 @@ const MoneyCalculator: FC<Props> = (props) => {
     };
 
     const calculateAdditionalThirteenLakhs = () => {
-      const additionalIncome = annualSalary - sevenLakhs;
+      const additionalIncome = netAssessable - sevenLakhs;
 
-      if (annualSalary < twentyLakhs) {
+      if (netAssessable < twentyLakhs) {
         const tax =
           calculateAdditionalTwoLakh() +
           taxRateForAdditionalThirteenLakhs * additionalIncome;
@@ -119,7 +123,7 @@ const MoneyCalculator: FC<Props> = (props) => {
     };
 
     const calculateAdditionalAboveTwentyLakhs = () => {
-      const additionalIncome = annualSalary - twentyLakhs;
+      const additionalIncome = netAssessable - twentyLakhs;
 
       const tax =
         calculateAdditionalThirteenLakhs() +
@@ -128,23 +132,27 @@ const MoneyCalculator: FC<Props> = (props) => {
       return tax;
     };
 
-    if (annualSalary <= fourLakhs) {
+    if (netAssessable <= fourLakhs) {
       const tax = calculateTaxUptoFourLakhs();
       setTds(tax);
-    } else if (annualSalary > fourLakhs && annualSalary <= fiveLakhs) {
+    } else if (netAssessable > fourLakhs && netAssessable <= fiveLakhs) {
       const tax = calculateAdditionalOneLakh();
       setTds(tax);
-    } else if (annualSalary > fiveLakhs && annualSalary <= sevenLakhs) {
+    } else if (netAssessable > fiveLakhs && netAssessable <= sevenLakhs) {
       const tax = calculateAdditionalTwoLakh();
       setTds(tax);
-    } else if (annualSalary > sevenLakhs && annualSalary <= twentyLakhs) {
+    } else if (netAssessable > sevenLakhs && netAssessable <= twentyLakhs) {
       const tax = calculateAdditionalThirteenLakhs();
       setTds(tax);
-    } else if (annualSalary > twentyLakhs) {
+    } else if (netAssessable > twentyLakhs) {
       const tax = calculateAdditionalAboveTwentyLakhs();
       setTds(tax);
     }
   };
+
+  const convertToFormat=(number:number)=>{
+    return number.toLocaleString('en-IN');
+  }
 
   const handleCalculate = () => {
     switch (marriage_status) {
@@ -157,7 +165,11 @@ const MoneyCalculator: FC<Props> = (props) => {
         break;
     }
 
-    setCashInHand(100000);
+    const annualSalary = basic_salary * no_of_months;
+
+    const cash = (annualSalary-tds)-cit;
+
+    setCashInHand(cash);
   };
 
   console.log('data', data);
@@ -196,6 +208,21 @@ const MoneyCalculator: FC<Props> = (props) => {
               />
             </Form.Item>
             <Form.Item
+              name='no_of_months'
+              label={<FormLabel>Months</FormLabel>}
+              initialValue={12}
+            >
+              <StyledInputNumber
+                name='no_of_months'
+                value={no_of_months}
+                min={1}
+                max={12}
+                onChange={(value) =>
+                  handleInputNumberChange(value, 'no_of_months')
+                }
+              />
+            </Form.Item>
+            <Form.Item
               name='cit'
               label={<FormLabel>CIT</FormLabel>}
               initialValue={0}
@@ -218,7 +245,7 @@ const MoneyCalculator: FC<Props> = (props) => {
                 <FormLabel>TDS</FormLabel>
               </AlignedCol>
               <AlignedCol>
-                <Text18>{tds ? `Rs. ${tds.toFixed(3)}` : '---'}</Text18>
+                <Text18>{tds ? `Rs. ${convertToFormat(tds)}` : '---'}</Text18>
               </AlignedCol>
             </Row>
           </Col>
@@ -228,7 +255,7 @@ const MoneyCalculator: FC<Props> = (props) => {
                 <FormLabel>Cash in hand</FormLabel>
               </AlignedCol>
               <AlignedCol>
-                <Text18>{cashInHand ? `Rs. ${cashInHand}` : '---'}</Text18>
+                <Text18>{cashInHand ? `Rs. ${convertToFormat(cashInHand)}` : '---'}</Text18>
               </AlignedCol>
             </Row>
           </Col>
