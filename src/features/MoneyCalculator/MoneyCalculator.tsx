@@ -6,13 +6,17 @@ import { StyledInputNumber } from '../../components/Input/InputNumber';
 import { AlignedCol, CenteredCol } from '../../components/Misc';
 import { Text18 } from '../../components/Typography/DefaultText';
 import { FormLabel } from '../../components/Typography/Labels';
+import { calculateTax2021 } from './utils/calculateTax2021';
+import { calculateTax2022 } from './utils/calculateTax2022';
 
 interface Props {}
 
 interface Data {
+  fiscal_year: string;
   marriage_status: string;
   basic_salary: number;
   no_of_months: number;
+  ssf: number;
   cit: number;
 }
 
@@ -22,13 +26,17 @@ const MoneyCalculator: FC<Props> = (props) => {
   const { Option } = Select;
 
   const [data, setData] = useState<Data>({
+    fiscal_year: '2021/2022',
     marriage_status: 'Unmarried',
     basic_salary: 0,
     no_of_months: 12,
+    ssf: 0,
     cit: 0,
   });
 
-  const { marriage_status, basic_salary, no_of_months, cit } = data;
+  const { marriage_status, basic_salary, no_of_months, ssf, cit } = data;
+
+  const [fiscalYear, setFiscalYear] = useState<string>('2021/2022');
 
   const [tds, setTds] = useState<string | undefined>('');
   const [cashInHand, setCashInHand] = useState<string | undefined>('');
@@ -41,137 +49,8 @@ const MoneyCalculator: FC<Props> = (props) => {
     setData({ ...data, [name]: value });
   };
 
-  const calculateTax = () => {
-    // constants for amounts
-    const oneLakhs = 100000;
-    const twoLakhs = 200000;
-    const fourLakhs = 400000;
-    const fourAndAHalfLakhs = 450000;
-    const fiveLakhs = 500000;
-    const fiveAndAHalfLakhs = 550000;
-    const sevenLakhs = 700000;
-    const sevenAndAHalfLakhs = 750000;
-    const twelveAndAHalfLakhs = 1250000;
-    const thirteenLakhs = 1300000;
-    const twentyLakhs = 2000000;
-
-    // tax rates for every step of annual income
-    const firstStepTaxRate = 0.01;
-    const secondStepTaxRate = 0.1;
-    const thirdStepTaxRate = 0.2;
-    const fourthStepTaxRate = 0.3;
-    const fifthStepTaxRate = 0.36;
-
-    // calculate annual salary
-    const annualSalary = basic_salary * no_of_months;
-
-    // calculate net assessable amount
-    const netAssessable = annualSalary - cit;
-
-    const fourOrFourAndAHalf =
-      marriage_status === 'Married' ? fourAndAHalfLakhs : fourLakhs;
-
-    const fiveOrFiveAndAHalf =
-      marriage_status === 'Married' ? fiveAndAHalfLakhs : fiveLakhs;
-    const sevenOrSevenAndAHalf =
-      marriage_status === 'Married' ? sevenAndAHalfLakhs : sevenLakhs;
-
-    const thirteenOrTwelveAndAHalf =
-      marriage_status === 'Married' ? twelveAndAHalfLakhs : thirteenLakhs;
-
-    // calculate tax up to four or four and a half lakhs
-    const calculateTaxUptoFourLakhs = () => {
-      if (netAssessable < fourOrFourAndAHalf) {
-        const tax = firstStepTaxRate * netAssessable;
-        return tax;
-      } else {
-        const tax = firstStepTaxRate * fourOrFourAndAHalf;
-        return tax;
-      }
-    };
-
-    // calculate tax for additional one lakh
-    const calculateAdditionalOneLakh = () => {
-      const additionalIncome = netAssessable - fourOrFourAndAHalf;
-
-      if (netAssessable < fiveOrFiveAndAHalf) {
-        const tax =
-          calculateTaxUptoFourLakhs() + secondStepTaxRate * additionalIncome;
-
-        return tax;
-      } else {
-        const tax = calculateTaxUptoFourLakhs() + secondStepTaxRate * oneLakhs;
-
-        return tax;
-      }
-    };
-
-    // calculate tax for additional two lakhs
-    const calculateAdditionalTwoLakh = () => {
-      const additionalIncome = netAssessable - fiveOrFiveAndAHalf;
-
-      if (netAssessable < sevenOrSevenAndAHalf) {
-        const tax =
-          calculateAdditionalOneLakh() + thirdStepTaxRate * additionalIncome;
-        return tax;
-      } else {
-        const tax = calculateAdditionalOneLakh() + thirdStepTaxRate * twoLakhs;
-        return tax;
-      }
-    };
-
-    // calculate tax for additional thirteen or twelve and a half lakhs
-    const calculateAdditionalThirteenLakhs = () => {
-      const additionalIncome = netAssessable - thirteenOrTwelveAndAHalf;
-
-      if (netAssessable < twentyLakhs) {
-        const tax =
-          calculateAdditionalTwoLakh() + fourthStepTaxRate * additionalIncome;
-        return tax;
-      } else {
-        const tax =
-          calculateAdditionalTwoLakh() +
-          fourthStepTaxRate * thirteenOrTwelveAndAHalf;
-        return tax;
-      }
-    };
-
-    // calculate tax for additional twenty lakhs
-    const calculateAdditionalAboveTwentyLakhs = () => {
-      const additionalIncome = netAssessable - twentyLakhs;
-
-      const tax =
-        calculateAdditionalThirteenLakhs() +
-        fifthStepTaxRate * additionalIncome;
-
-      return tax;
-    };
-
-    if (netAssessable <= fourOrFourAndAHalf) {
-      const tax = calculateTaxUptoFourLakhs();
-      return tax;
-    } else if (
-      netAssessable > fourOrFourAndAHalf &&
-      netAssessable <= fiveOrFiveAndAHalf
-    ) {
-      const tax = calculateAdditionalOneLakh();
-      return tax;
-    } else if (
-      netAssessable > fiveOrFiveAndAHalf &&
-      netAssessable <= sevenOrSevenAndAHalf
-    ) {
-      const tax = calculateAdditionalTwoLakh();
-      return tax;
-    } else if (
-      netAssessable > sevenOrSevenAndAHalf &&
-      netAssessable <= twentyLakhs
-    ) {
-      const tax = calculateAdditionalThirteenLakhs();
-      return tax;
-    } else if (netAssessable > twentyLakhs) {
-      const tax = calculateAdditionalAboveTwentyLakhs();
-      return tax;
-    }
+  const handleFiscalYearChange = (value: string) => {
+    setFiscalYear(value);
   };
 
   // function to convert to Indian rupee format
@@ -181,12 +60,37 @@ const MoneyCalculator: FC<Props> = (props) => {
 
   // calculate cash in hand
   const handleCalculate = () => {
-    const tds = calculateTax();
+    let tax;
+    switch (fiscalYear) {
+      case '2021/2022':
+        tax = calculateTax2021(
+          marriage_status,
+          basic_salary,
+          no_of_months,
+          cit,
+          ssf
+        );
+        break;
+
+      case '2022/2023':
+        tax = calculateTax2022(
+          marriage_status,
+          basic_salary,
+          no_of_months,
+          cit,
+          ssf
+        );
+        break;
+
+      default:
+        break;
+    }
+
     const annualSalary = basic_salary * no_of_months;
 
-    const cash = annualSalary - Number(tds) - cit;
+    const cash = annualSalary - Number(tax) - ssf - cit;
 
-    setTds(convertToFormat(tds));
+    setTds(convertToFormat(tax));
     setCashInHand(convertToFormat(cash));
   };
 
@@ -195,66 +99,109 @@ const MoneyCalculator: FC<Props> = (props) => {
       <CenteredCol xs={24}>
         <CalculatorCard>
           <Form form={form} layout='vertical' onFinish={handleCalculate}>
-            <Form.Item
-              name='marriage_status'
-              label={<FormLabel>Marriage Status</FormLabel>}
-              initialValue='Unmarried'
-            >
-              <Select
-                value={marriage_status}
-                style={{ width: '100%' }}
-                onChange={handleSelectChange}
-              >
-                <Option value='Unmarried'>Unmarried</Option>
-                <Option value='Married'>Married</Option>
-              </Select>
-            </Form.Item>
-            <Form.Item
-              name='basic_salary'
-              label={<FormLabel>Salary</FormLabel>}
-              initialValue={0}
-            >
-              <StyledInputNumber
-                name='basic_salary'
-                value={basic_salary}
-                min={0}
-                onChange={(value) =>
-                  handleInputNumberChange(value, 'basic_salary')
-                }
-              />
-            </Form.Item>
-            <Form.Item
-              name='no_of_months'
-              label={<FormLabel>Months</FormLabel>}
-              initialValue={12}
-            >
-              <StyledInputNumber
-                name='no_of_months'
-                value={no_of_months}
-                min={1}
-                max={12}
-                onChange={(value) =>
-                  handleInputNumberChange(value, 'no_of_months')
-                }
-              />
-            </Form.Item>
-            <Form.Item
-              name='cit'
-              label={<FormLabel>CIT</FormLabel>}
-              initialValue={0}
-            >
-              <StyledInputNumber
-                name='cit'
-                value={cit}
-                onChange={(value) => handleInputNumberChange(value, 'cit')}
-                min={0}
-              />
-            </Form.Item>
-            <Form.Item>
-              <StyledButton htmlType='submit' size='large'>
-                Calculate
-              </StyledButton>
-            </Form.Item>
+            <Row style={{ width: '100%' }} gutter={[16, 16]}>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name='marriage_status'
+                  label={<FormLabel>Marriage Status</FormLabel>}
+                  initialValue='Unmarried'
+                >
+                  <Select
+                    value={marriage_status}
+                    style={{ width: '100%' }}
+                    onChange={handleSelectChange}
+                  >
+                    <Option value='Unmarried'>Unmarried</Option>
+                    <Option value='Married'>Married</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name='fiscalYear'
+                  label={<FormLabel>Fiscal Year</FormLabel>}
+                  initialValue='2021/2022'
+                >
+                  <Select
+                    value={fiscalYear}
+                    style={{ width: '100%' }}
+                    onChange={handleFiscalYearChange}
+                  >
+                    <Option value='2021/2022'>2021/2022</Option>
+                    <Option value='2022/2023'>2022/2023</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name='basic_salary'
+                  label={<FormLabel>Salary</FormLabel>}
+                  initialValue={0}
+                >
+                  <StyledInputNumber
+                    name='basic_salary'
+                    value={basic_salary}
+                    min={0}
+                    onChange={(value) =>
+                      handleInputNumberChange(value, 'basic_salary')
+                    }
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name='no_of_months'
+                  label={<FormLabel>Months</FormLabel>}
+                  initialValue={12}
+                >
+                  <StyledInputNumber
+                    name='no_of_months'
+                    value={no_of_months}
+                    min={1}
+                    max={12}
+                    onChange={(value) =>
+                      handleInputNumberChange(value, 'no_of_months')
+                    }
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name='ssf'
+                  label={<FormLabel>SSF</FormLabel>}
+                  initialValue={0}
+                >
+                  <StyledInputNumber
+                    name='ssf'
+                    value={ssf}
+                    onChange={(value) => handleInputNumberChange(value, 'ssf')}
+                    min={0}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name='cit'
+                  label={<FormLabel>CIT</FormLabel>}
+                  initialValue={0}
+                >
+                  <StyledInputNumber
+                    name='cit'
+                    value={cit}
+                    onChange={(value) => handleInputNumberChange(value, 'cit')}
+                    min={0}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24}>
+                <Form.Item>
+                  <StyledButton htmlType='submit' size='large'>
+                    Calculate
+                  </StyledButton>
+                </Form.Item>
+              </Col>
+            </Row>
           </Form>
           <Col xs={24}>
             <Row justify='space-between'>
